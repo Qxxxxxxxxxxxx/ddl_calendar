@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f8fc">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="DDL日历">
+  <meta name="description" content="离线可用的DDL任务日历，数据仅保存在本机。">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="./styles.css">
+  <title>DDL日历</title>
+</head>
+<body>
+  <div class="app-shell">
+    <main id="main" class="main-content">
+      <section id="page-calendar" class="page" aria-labelledby="calendar-heading">
+        <header class="page-header">
+          <div><p class="eyebrow">轻松管理每一个截止时间</p><h1 id="calendar-heading">DDL日历</h1></div>
+          <button class="icon-button today-shortcut" id="jump-today" type="button" aria-label="回到今天" title="回到今天"><span data-icon="calendar-check"></span></button>
+        </header>
+        <section class="calendar-panel" aria-label="月历">
+          <div class="month-nav">
+            <button class="icon-button" id="prev-month" type="button" aria-label="上个月"><span data-icon="chevron-left"></span></button>
+            <button class="month-title" id="month-title" type="button" title="回到当前月份"></button>
+            <button class="icon-button" id="next-month" type="button" aria-label="下个月"><span data-icon="chevron-right"></span></button>
+          </div>
+          <div class="calendar-weekdays" id="calendar-weekdays"></div>
+          <div class="calendar-grid" id="calendar-grid" role="grid" aria-label="选择日期"></div>
+          <div class="calendar-hint"><span><i class="dot pending"></i>未完成</span><span><i class="dot overdue"></i>已逾期</span><span><i class="dot completed"></i>已完成</span></div>
+        </section>
+        <section class="day-section" aria-live="polite">
+          <div class="section-heading"><div><h2 id="selected-date-label">今天</h2><p id="selected-day-summary" class="subheading"></p></div></div>
+          <div id="day-list" class="task-list"></div>
+        </section>
+      </section>
+      <section id="page-tasks" class="page hidden" aria-labelledby="tasks-heading">
+        <header class="page-header"><div><p class="eyebrow">每一件事，都有条理</p><h1 id="tasks-heading">全部任务</h1></div></header>
+        <div id="status-tabs" class="status-tabs" role="tablist" aria-label="任务状态">
+          <button class="status-tile active" type="button" data-status="pending" role="tab" aria-selected="true"><strong id="count-pending">0</strong><span>未完成</span></button>
+          <button class="status-tile" type="button" data-status="overdue" role="tab" aria-selected="false"><strong id="count-overdue">0</strong><span>已逾期</span></button>
+          <button class="status-tile" type="button" data-status="completed" role="tab" aria-selected="false"><strong id="count-completed">0</strong><span>已完成</span></button>
+        </div>
+        <div class="tasks-filter-row" id="tasks-filter-row">
+          <div class="segmented" role="group" aria-label="是否设置DDL">
+            <button type="button" class="active" data-subtype="dated">有DDL</button>
+            <button type="button" data-subtype="undated">无DDL</button>
+          </div>
+        </div>
+        <div id="task-list-title" class="list-heading"></div>
+        <div id="all-task-list" class="task-list"></div>
+        <div class="footnote" id="horizon-note" hidden>
+          <span>周期任务显示未来<span id="horizon-days">90</span>天的待办，其他日期可在月历中查看。</span>
+          <button id="load-more-series" type="button" class="text-button">再看90天</button>
+        </div>
+      </section>
+      <section id="page-settings" class="page hidden" aria-labelledby="settings-heading">
+        <header class="page-header"><div><p class="eyebrow">只属于你的私人任务本</p><h1 id="settings-heading">设置</h1></div></header>
+        <section class="settings-section"><h2>数据管理</h2>
+          <div class="settings-card">
+            <button type="button" class="settings-row" id="export-button"><span class="settings-leading"><span data-icon="download"></span>导出JSON备份</span><span data-icon="chevron-right"></span></button>
+            <button type="button" class="settings-row" id="import-button"><span class="settings-leading"><span data-icon="upload"></span>导入JSON备份</span><span data-icon="chevron-right"></span></button>
+            <button type="button" class="settings-row destructive" id="clear-all-button"><span class="settings-leading"><span data-icon="trash"></span>清空全部数据</span><span data-icon="chevron-right"></span></button>
+          </div>
+          <p class="settings-tip" id="backup-time">还没有导出过备份。建议定期保存到“文件”App。</p>
+        </section>
+        <section class="settings-section"><h2>显示偏好</h2>
+          <div class="settings-card">
+            <div class="settings-control"><label for="theme-select">外观</label><select id="theme-select"><option value="system">跟随系统</option><option value="light">浅色</option><option value="dark">深色</option></select></div>
+            <div class="settings-control"><label for="week-select">每周开始于</label><select id="week-select"><option value="1">星期一</option><option value="0">星期日</option></select></div>
+          </div>
+        </section>
+        <section class="settings-section"><h2>应用信息</h2>
+          <div class="settings-card info-card">
+            <div class="info-line"><span>数据保存</span><strong>此设备（IndexedDB）</strong></div>
+            <div class="info-line"><span>联网状态</span><strong id="connection-state">检测中</strong></div>
+            <div class="info-line"><span>版本</span><strong>1.0.0</strong></div>
+          </div>
+          <p class="settings-tip">支持iPhone和安卓。首次请通过HTTPS网址打开并添加至主屏幕，等待应用资源缓存后即可离线使用。数据不自动跨设备同步，清理浏览器或应用数据可能使本地记录丢失，请定期导出备份。</p>
+        </section>
+      </section>
+    </main>
+    <button class="fab" id="add-task-button" type="button" aria-label="新增任务" title="新增任务"><span data-icon="plus"></span></button>
+    <nav class="bottom-nav" aria-label="主导航">
+      <button class="nav-item active" type="button" data-page="calendar"><span data-icon="calendar"></span><span>日历</span></button>
+      <button class="nav-item" type="button" data-page="tasks"><span data-icon="list"></span><span>全部任务</span></button>
+      <button class="nav-item" type="button" data-page="settings"><span data-icon="settings"></span><span>设置</span></button>
+    </nav>
+  </div>
+
+  <dialog id="task-dialog" class="sheet-dialog" aria-labelledby="editor-heading">
+    <form id="task-form" class="sheet-body">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div class="sheet-header"><button type="button" class="link-button secondary" id="cancel-editor">取消</button><h2 id="editor-heading">新增任务</h2><button type="submit" class="link-button primary" id="save-task">保存</button></div>
+      <div class="field-block"><label for="task-title">任务名称 <span class="required">*</span></label><input id="task-title" name="title" type="text" placeholder="例如：提交实验报告" maxlength="160" required autocomplete="off"></div>
+      <div class="field-block"><label for="task-note">备注（可选）</label><textarea id="task-note" name="note" rows="2" maxlength="3000" placeholder="补充说明、提交链接、注意事项……"></textarea></div>
+      <div class="field-block"><span class="field-label">截止时间（DDL）</span><div class="segmented triple" id="deadline-modes"><button type="button" data-mode="none">无DDL</button><button type="button" data-mode="date">仅日期</button><button type="button" data-mode="datetime">日期＋时间</button></div></div>
+      <div id="deadline-fields" class="field-block"><label for="task-date">截止日期</label><input id="task-date" type="date"><div id="time-field"><label for="task-time">截止时间</label><input id="task-time" type="time" step="60"></div></div>
+      <div id="scope-field" class="field-block" hidden><span class="field-label">修改重复任务</span><div class="segmented"><button type="button" class="active" data-scope="once">仅修改本次</button><button type="button" data-scope="future">修改本次及以后</button></div><p class="field-help">“仅修改本次”会将这一项从重复计划中独立出来。</p></div>
+      <div id="recurrence-fields" class="field-block"><label for="repeat-kind">重复</label><select id="repeat-kind"><option value="none">不重复</option><option value="daily">每天</option><option value="weekly">每周</option><option value="monthly">每月</option><option value="custom">自定义间隔</option></select>
+        <div id="weekly-options" hidden><span class="field-label inner-label">每周重复日</span><div id="weekday-picker" class="weekday-picker"></div></div>
+        <div id="custom-options" class="inline-fields" hidden><span>每</span><input type="number" id="repeat-every" min="1" max="365" value="2" inputmode="numeric" aria-label="重复间隔"><select id="repeat-unit"><option value="days">天</option><option value="weeks">周</option><option value="months">月</option></select><span>重复</span></div>
+        <div id="repeat-end-wrapper" hidden><label for="repeat-end">重复结束日（可选）</label><input type="date" id="repeat-end"></div>
+      </div>
+      <p id="form-error" class="form-error" role="alert" hidden></p>
+      <button id="delete-task-button" type="button" class="delete-task-button" hidden><span data-icon="trash"></span>删除这项任务</button>
+    </form>
+  </dialog>
+  <dialog id="choice-dialog" class="choice-dialog" aria-labelledby="choice-title">
+    <div class="choice-inner"><h2 id="choice-title">确认操作</h2><p id="choice-message"></p><div id="choice-actions" class="choice-actions"></div><button id="choice-cancel" class="choice-cancel" type="button">取消</button></div>
+  </dialog>
+  <input type="file" accept=".json,application/json" id="import-file" hidden>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script defer src="./app.js"></script>
+</body>
+</html>
